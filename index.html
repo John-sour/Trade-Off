@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14213d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Trade-off">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Trade-off</title>
+<style>
+  :root {
+    --bg: #f6f4ef; --card: #ffffff; --ink: #1c2230; --mute: #667085; --line: #e3e0d8;
+    --accent: #14213d; --accent-ink: #ffffff; --good: #1f7a4d; --warn: #b4540a; --bar: #d9e2f2; --bar-fill: #2f5aa8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #10131a; --card: #181d27; --ink: #e8ebf2; --mute: #98a2b3; --line: #2a3140;
+      --accent: #8fb0ff; --accent-ink: #0b1220; --good: #5fd39a; --warn: #f0a05c; --bar: #263149; --bar-fill: #7ea3f2;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 40px);
+  }
+  main { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 24px 0 4px; letter-spacing: -0.02em; }
+  h2 { font-size: 18px; margin: 28px 0 10px; }
+  .sub { color: var(--mute); margin: 0 0 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  label { font-size: 13px; color: var(--mute); display: block; margin-bottom: 4px; }
+  select, input[type=number], input[type=text] {
+    width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); font-size: 16px;
+  }
+  .row { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  button {
+    font: inherit; font-weight: 600; border-radius: 10px; border: 1px solid var(--line); padding: 10px 14px;
+    background: var(--card); color: var(--ink); cursor: pointer;
+  }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); width: 100%; padding: 14px; font-size: 17px; }
+  button.link { border: none; background: none; color: var(--mute); padding: 4px 8px; font-weight: 500; }
+  .opt-head { display: flex; gap: 8px; align-items: end; margin-bottom: 12px; }
+  .opt-head > div { flex: 1; }
+  .field { display: grid; grid-template-columns: 1fr 96px 96px; gap: 8px; align-items: center; padding: 7px 0; border-top: 1px solid var(--line); }
+  .field:first-of-type { border-top: none; }
+  .field .name { font-size: 15px; }
+  .field .hint { display: block; font-size: 12px; color: var(--mute); }
+  .field input { padding: 8px 10px; }
+  .cols { display: grid; grid-template-columns: 1fr 96px 96px; gap: 8px; font-size: 12px; color: var(--mute); margin-bottom: 2px; }
+  @media (max-width: 520px) {
+    .field, .cols { grid-template-columns: 1fr 78px 78px; }
+  }
+  .verdict { border-left: 4px solid var(--good); }
+  .verdict.close { border-left-color: var(--warn); }
+  .verdict .big { font-size: 20px; font-weight: 700; margin: 0 0 6px; }
+  .verdict p { margin: 6px 0; }
+  .res { display: grid; gap: 6px; }
+  .res .top { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; }
+  .bar { height: 10px; background: var(--bar); border-radius: 99px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--bar-fill); border-radius: 99px; }
+  .meta { font-size: 13px; color: var(--mute); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .pos { color: var(--good); } .neg { color: var(--warn); }
+  ul.sens { margin: 6px 0 0; padding-left: 18px; }
+  .fine { font-size: 13px; color: var(--mute); margin-top: 24px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Trade-off</h1>
+  <p class="sub">Compare options by what each one really costs you, including the best alternative you give up. Enter ranges, not single guesses.</p>
+
+  <div class="card">
+    <label for="tpl">Start from a template</label>
+    <select id="tpl"></select>
+    <p class="fine" id="tplNote" style="margin:10px 0 0"></p>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div><label for="horizon">Look ahead (years)</label><input id="horizon" type="number" min="0.5" max="30" step="0.5" value="3"></div>
+      <div><label for="discount">Your alternative return (% / year)</label><input id="discount" type="number" min="0" max="50" step="0.5" value="6"></div>
+      <div><label for="runs">Simulations</label><input id="runs" type="number" min="500" max="50000" step="500" value="5000"></div>
+    </div>
+    <p class="fine" style="margin:10px 0 0">"Alternative return" is what the money would earn if you didn't spend it (savings, FD, fund). It makes ₹ today worth more than ₹ later.</p>
+  </div>
+
+  <h2>Your options</h2>
+  <div id="options"></div>
+  <button id="add">+ Add option</button>
+  <div style="height:14px"></div>
+  <button class="primary" id="run">Run simulation</button>
+
+  <div id="out" class="hidden">
+    <h2>Result</h2>
+    <div id="verdict" class="card verdict"></div>
+    <div id="results"></div>
+    <div id="sensCard" class="card hidden">
+      <strong>What to research first</strong>
+      <p class="sub" style="margin:4px 0 0">These guesses swing the result the most. Narrowing them is worth more than anything else.</p>
+      <ul class="sens" id="sens"></ul>
+    </div>
+  </div>
+
+  <p class="fine">This is a decision aid, not a prediction. It is only as good as the ranges you enter, and it can't weigh things you can't put a number on. For money decisions that matter, check with a qualified adviser.</p>
+</main>
+
+<script src="sim.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

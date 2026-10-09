@@ -1,0 +1,15 @@
+{
+  "name": "tradeoff",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Opportunity cost simulator (web app + iOS wrapper)",
+  "scripts": {
+    "test": "node test/sim.test.js",
+    "serve": "npx --yes serve web"
+  },
+  "dependencies": {
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/ios": "^7.0.0"
+  }
+}

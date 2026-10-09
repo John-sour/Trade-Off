@@ -1,0 +1,13 @@
+{
+  "name": "Trade-off",
+  "short_name": "Trade-off",
+  "description": "Opportunity cost simulator",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f6f4ef",
+  "theme_color": "#14213d",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
