@@ -130,7 +130,14 @@
 
   function fieldName(k) { return NAMES[k] || k; }
 
-  function show(res) {
+  // Same inputs -> same seed -> same result, so the answer doesn't wobble between clicks.
+  function seedFrom(obj) {
+    var str = JSON.stringify(obj), h = 2166136261;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return (h >>> 0) % 1000000007;
+  }
+
+  function show(res, seed) {
     var s = res.stats, L = s[res.leader], S = s[res.safest];
     var sorted = s.map(function (x, i) { return i; }).sort(function (a, b) { return s[b].mean - s[a].mean; });
     var runnerUp = sorted.length > 1 ? s[sorted[1]] : null;
@@ -153,8 +160,8 @@
       var bar = el("div", { class: "bar" }, [el("i", { style: "width:" + pct + "%" })]);
       var meta = el("div", { class: "meta" }, [
         el("span", { class: x.mean >= 0 ? "pos" : "neg", text: "Average " + signed(x.mean) }),
-        el("span", { text: "Typical range " + signed(x.p10) + " to " + signed(x.p90) }),
-        el("span", { text: "Avg regret " + inr(x.meanRegret) })
+        el("span", { text: "Middle 80% of outcomes: " + signed(x.p10) + " to " + signed(x.p90) }),
+        el("span", { text: "Avg regret " + inr(x.meanRegret) + " (how much better the best option would have been)" })
       ]);
       box.appendChild(el("div", { class: "card res" }, [top, bar, meta]));
     });
@@ -168,6 +175,7 @@
       sc.classList.remove("hidden");
     } else sc.classList.add("hidden");
 
+    $("seedNote").textContent = "Based on " + res.runs.toLocaleString("en-IN") + " simulations. Run ID " + seed + ": the same inputs always give the same result.";
     $("out").classList.remove("hidden");
     $("out").scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -178,7 +186,11 @@
     var btn = $("run"); btn.textContent = "Running…"; btn.disabled = true;
     setTimeout(function () {
       try {
-        show(OppCost.simulate(state.opts, { horizonYears: state.horizon, discount: state.discount, runs: state.runs, seed: Date.now() % 100000 }));
+        var cfg = { horizonYears: state.horizon, discount: state.discount, runs: state.runs };
+        cfg.seed = seedFrom({ o: state.opts, c: cfg });
+        show(OppCost.simulate(state.opts, cfg), cfg.seed);
+      } catch (e) {
+        alert(e.message);
       } finally { btn.textContent = "Run simulation"; btn.disabled = false; }
     }, 20);
   }

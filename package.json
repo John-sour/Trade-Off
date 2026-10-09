@@ -4,8 +4,8 @@
   "private": true,
   "description": "Opportunity cost simulator (web app + iOS wrapper)",
   "scripts": {
-    "test": "node test/sim.test.js",
-    "serve": "npx --yes serve web"
+    "test": "node sim.test.js",
+    "serve": "npx --yes serve ."
   },
   "dependencies": {
     "@capacitor/cli": "^7.0.0",

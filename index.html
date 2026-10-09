@@ -84,7 +84,7 @@
   <div class="card">
     <div class="row">
       <div><label for="horizon">Look ahead (years)</label><input id="horizon" type="number" min="0.5" max="30" step="0.5" value="3"></div>
-      <div><label for="discount">Your alternative return (% / year)</label><input id="discount" type="number" min="0" max="50" step="0.5" value="6"></div>
+      <div><label for="discount">Alternative return after inflation (% / year)</label><input id="discount" type="number" min="0" max="50" step="0.5" value="6"></div>
       <div><label for="runs">Simulations</label><input id="runs" type="number" min="500" max="50000" step="500" value="5000"></div>
     </div>
     <p class="fine" style="margin:10px 0 0">"Alternative return" is what the money would earn if you didn't spend it (savings, FD, fund). It makes ₹ today worth more than ₹ later.</p>
@@ -102,11 +102,13 @@
     <div id="results"></div>
     <div id="sensCard" class="card hidden">
       <strong>What to research first</strong>
-      <p class="sub" style="margin:4px 0 0">These guesses swing the result the most. Narrowing them is worth more than anything else.</p>
+      <p class="sub" style="margin:4px 0 0">A rough estimate of which guesses swing the result most (based on correlation, so it can miss unusual interactions). Narrowing these is usually worth more than anything else.</p>
       <ul class="sens" id="sens"></ul>
     </div>
   </div>
 
+  <p class="fine" id="seedNote"></p>
+  <p class="fine">How it's calculated: each value is drawn at random between your low and high (the midpoint is treated as most likely). Money is discounted at your alternative return, so ₹ today counts for more than ₹ later; enter a return after inflation. Resale value is assumed to fall in a straight line over the item's life. An option that lasts shorter than your look-ahead gets no benefit afterwards and no replacement cost. Inputs are assumed to be independent.</p>
   <p class="fine">This is a decision aid, not a prediction. It is only as good as the ranges you enter, and it can't weigh things you can't put a number on. For money decisions that matter, check with a qualified adviser.</p>
 </main>
 

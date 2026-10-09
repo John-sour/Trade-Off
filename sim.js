@@ -57,20 +57,48 @@
     return sxx && syy ? sxy / Math.sqrt(sxx * syy) : 0;
   }
 
+  function isNum(x) { return typeof x === "number" && isFinite(x); }
+  function pick(v, dflt) { return v === undefined || v === null ? dflt : v; }
+
+  // Throws an Error with a plain-language message if the inputs can't be simulated.
+  function validate(opts, cfg) {
+    if (!Array.isArray(opts) || opts.length < 1) throw new Error("Add at least one option.");
+    if (opts.length > 20) throw new Error("Too many options (maximum 20).");
+    if (!cfg || typeof cfg !== "object") throw new Error("Missing settings.");
+    var h = pick(cfg.horizonYears, 3), d = pick(cfg.discount, 0), n = pick(cfg.runs, 5000);
+    if (!isNum(h) || h <= 0 || h > 50) throw new Error("Look-ahead must be above 0 and at most 50 years.");
+    if (!isNum(d) || d <= -100 || d > 1000) throw new Error("Alternative return must be above -100% and at most 1000%.");
+    if (!isNum(n) || n < 100 || n > 200000 || Math.floor(n) !== n) throw new Error("Simulations must be a whole number from 100 to 200,000.");
+    if (cfg.seed !== undefined && !isNum(cfg.seed)) throw new Error("Seed must be a number.");
+    opts.forEach(function (o, i) {
+      var label = "Option " + (i + 1) + (o && o.name ? " (" + o.name + ")" : "");
+      if (!o || typeof o.name !== "string" || !o.name.trim()) throw new Error("Option " + (i + 1) + " needs a name.");
+      FIELDS.forEach(function (f) {
+        var r = o[f];
+        if (!Array.isArray(r) || r.length !== 2 || !isNum(r[0]) || !isNum(r[1]))
+          throw new Error(label + ": '" + f + "' needs a low and a high number.");
+        if (f === "life" && Math.min(r[0], r[1]) <= 0) throw new Error(label + ": lifespan must be above 0.");
+        if (f !== "benefit" && Math.min(r[0], r[1]) < 0) throw new Error(label + ": '" + f + "' can't be negative.");
+      });
+    });
+  }
+
   // opts: [{name, delay:[min,max], upfront:[..], running:[..], benefit:[..], life:[..], resale:[..]}]
   // cfg: {horizonYears, discount (percent per year), runs, seed}
   function simulate(opts, cfg) {
-    var N = cfg.runs || 5000, n = opts.length;
-    var H = Math.round((cfg.horizonYears || 3) * 12);
-    var mr = Math.pow(1 + (cfg.discount || 0) / 100, 1 / 12) - 1;
-    var r = rng(cfg.seed || 12345);
+    validate(opts, cfg);
+    var N = pick(cfg.runs, 5000), n = opts.length;
+    var H = Math.round(pick(cfg.horizonYears, 3) * 12);
+    var mr = Math.pow(1 + pick(cfg.discount, 0) / 100, 1 / 12) - 1;
+    var r = rng(pick(cfg.seed, 12345));
     var npvs = [], samples = [], i, k, f;
     for (i = 0; i < n; i++) { npvs.push(new Array(N)); samples.push({}); FIELDS.forEach(function (ff) { samples[i][ff] = new Array(N); }); }
 
     var wins = new Array(n).fill(0);
     var best = new Array(N);
+    var EPS = 1e-9; // values this close count as a tie
     for (k = 0; k < N; k++) {
-      var top = -Infinity, topI = 0;
+      var top = -Infinity;
       for (i = 0; i < n; i++) {
         var s = {};
         for (f = 0; f < FIELDS.length; f++) {
@@ -80,9 +108,12 @@
         }
         var v = npv(s, H, mr);
         npvs[i][k] = v;
-        if (v > top) { top = v; topI = i; }
+        if (v > top) top = v;
       }
-      wins[topI]++;
+      // A tie shares the win equally, so identical options get equal credit.
+      var tied = [];
+      for (i = 0; i < n; i++) if (npvs[i][k] >= top - EPS * Math.max(1, Math.abs(top))) tied.push(i);
+      for (var t = 0; t < tied.length; t++) wins[tied[t]] += 1 / tied.length;
       best[k] = top;
     }
 
@@ -124,7 +155,7 @@
     return { stats: stats, leader: leader, safest: safest, sensitivity: sens.slice(0, 5), runs: N };
   }
 
-  var api = { FIELDS: FIELDS, simulate: simulate, npv: npv };
+  var api = { FIELDS: FIELDS, simulate: simulate, npv: npv, validate: validate };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OppCost = api;
 })(typeof window !== "undefined" ? window : globalThis);
